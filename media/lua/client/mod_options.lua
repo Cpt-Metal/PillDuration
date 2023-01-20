@@ -21,18 +21,23 @@ PillDuration_OPTIONS = {
 
     function opt1:OnApplyInGame(val)
       changePBsValue(1, val);
+      --hideUI();
     end
     function opt2:OnApplyInGame(val)
       changePBsValue(2, val);
+      --hideUI();
     end
     function opt3:OnApplyInGame(val)
       changePBsValue(3, val);
+      --hideUI();
     end
     function opt4:OnApplyInGame(val)
       changePBsValue(4, val);
+      --hideUI();
     end
     function opt5:OnApplyInGame(val)
       changePBsValue(5, val);
+      --hideUI();
     end
   end
 

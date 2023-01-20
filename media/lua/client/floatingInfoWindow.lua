@@ -6,11 +6,15 @@ local UIList = {ui0, ui1, ui2, ui3, ui4, ui5};
 local pbs = {false, false, false, false, false};
 
 local stringList = {"", "", "", "", "", "", "", ""};
-local minValueList = {-4, -11, 0, -11, 0};
-local maxValueList = {6600, 5400, 6600, 6600, 50};
+local valueList = {0, 0, 0, 0, 0};
+local minValueList = {-4, -14, 0, -11, 0};
+local maxValueList = {6600, 5400, 6600, 6600, 36000};
+
+local activeUIid;
 
 local function onCreateUI()
-    --print("Creating Pill Info Window");
+    
+    -- redefine arrays because the values are somehow not loaded
 
     stringList[1] = getText("IGUI_PillInfoOpen");
     stringList[2] = getText("IGUI_PillInfoTitle");
@@ -20,11 +24,22 @@ local function onCreateUI()
     stringList[6] = getText("IGUI_PillDepr");
     stringList[7] = getText("IGUI_PillSleep");
     stringList[8] = getText("IGUI_Antibiotics");
+    
+    minValueList[1] = -4;
+    minValueList[2] = -14;
+    minValueList[3] = 0;
+    minValueList[4] = -11;
+    minValueList[5] = 0;
 
+    maxValueList[1] = 6600;
+    maxValueList[2] = 5400;
+    maxValueList[3] = 6600;
+    maxValueList[4] = 6600;
+    maxValueList[5] = 36000;
 
     local tmpUI;
     tmpUI = NewUI();
-    tmpUI:setTitle(getText("IGUI_PillInfoTitle") .. tostring(i));
+    tmpUI:setTitle(getText("IGUI_PillInfoTitle"));
     tmpUI:addText("t1", getText("IGUI_NoneActiveInfo"), _, "Center");
     tmpUI:saveLayout();
     tmpUI:close();
@@ -41,10 +56,9 @@ local function onCreateUI()
             local index = u - i + 1;
             local tName = "t" .. tostring(index);
             local pbName = "pb" .. tostring(index);
-            print("added ", tName, " and ", pbName);
+            --print("added ", tName, " and ", pbName);
             tmpUI:addText(tName, tName, _, "Center");
-            local tmp = u * 10;
-            tmpUI:addProgressBar(pbName, 0, 50, 100);
+            tmpUI:addProgressBar(pbName, 0, 50, 1000);
             if u ~= 5 then
                 tmpUI:nextLine(); 
             end
@@ -54,10 +68,8 @@ local function onCreateUI()
         tmpUI:close();
 
         UIList[i + 1] = tmpUI;
-        print("UI CREATED: ", tostring(tmpUI), " at index ", i + 1);
+        --print("UI CREATED: ", tostring(tmpUI), " at index ", i + 1);
     end
-
-
 
     -- load settings from mod options
     pbs[1] = PillDuration_OPTIONS.showBetaBlockerValue;
@@ -66,47 +78,10 @@ local function onCreateUI()
     pbs[4] = PillDuration_OPTIONS.showSleepingTabletsValue;
     pbs[5] = PillDuration_OPTIONS.showAntibioticsValue;
 
-    --[[
-	UI = NewUI();
-    UI:setTitle(getText("IGUI_PillInfoTitle"));
-
-    local atLeastOneDisplayed = false;
-
-    
-    if PillDuration_OPTIONS.showBetaBlockerValue == true then
-        UI:addText("t1", getText("IGUI_PillBeta"), _, "Center");
-        UI:addProgressBar("betaPB", 0, 0, 100);
-        UI:nextLine();
-    end
-
-      
-    if PillDuration_OPTIONS.showPainkillerValue then
-        UI:addText("t2", getText("IGUI_PillPain"), _, "Center");
-        UI:addProgressBar("painPB", 0, 0, 100);
-        UI:nextLine();
-    end
-
-      
-    if PillDuration_OPTIONS.showAntiDepressantsValue then
-        UI:addText("t3", getText("IGUI_PillDepr"), _, "Center");
-        UI:addProgressBar("depressPB", 0, 0, 100);
-        UI:nextLine();
-    end
-
-      
-    if PillDuration_OPTIONS.showSleepingTabletsValue then
-        UI:addText("t4", getText("IGUI_PillSleep"), _, "Center");
-        UI:addProgressBar("sleepPB", 0, 0, 100);
-        UI:nextLine();
-    end
-
-    UI:addText("t5", getText("IGUI_Antibiotics"), _, "Center");
-    UI:addProgressBar("antibPB", 0, 0, 100);
-    UI:nextLine();
-
-    UI:saveLayout();
-    UI:close();
-    --]]
+    local c = getDisplayCount();
+    local a = getUIIndexfromCount(c);
+    activeUIid = a;
+    UI = UIList[activeUIid];
 end
 
 function everyMinute()
@@ -115,18 +90,29 @@ end
 
 function changePBsValue(index, val)
     pbs[index] = val;
-    closeAllUIs();
     updatePillInfoWindow();
+    local c = getDisplayCount();
+    local a = getUIIndexfromCount(c);
+    if a ~= activeUIid then
+        activeUIid = a;
+        closeAllButOneUI(activeUIid);
+    end
 end
 
-function closeAllUIs()
+function closeAllButOneUI(id)
     for i=1,6 do
-        local tmp = UIList[i];
-        tmp:close();
+        local ui = UIList[i];
+        if i ~= id then
+            ui:close();
+        else
+            ui:open();
+        end
     end
 end
 
 function updatePillInfoWindow()
+
+
     local c = getCharacterObj();    
 
     if not c then
@@ -134,103 +120,47 @@ function updatePillInfoWindow()
     end  
 
     local tmpUI = getPillInfoUI();
-
     local count = getDisplayCount();
-
     local uiIndex = getUIIndexfromCount(count);
+    
+    --closeAllButOneUI(activeUIid);
+    
+    if count == 0 then
+        return
+    end
+    
+    --print(tostring(count)," -- ", tostring(uiIndex), " - ", tostring(tmpUI));
+
+    valueList[1] = c:getBetaEffect();
+    valueList[2] = c:getPainEffect();
+    valueList[3] = c:getDepressEffect();
+    valueList[4] = c:getSleepingTabletEffect();
+    valueList[5] = c:getReduceInfectionPower() * 720;
 
     local index = 1;
-    
-    print(tostring(count)," -- ", tostring(uiIndex), " - ", tostring(tmpUI));
-
-    if count > 0 then
-  
-
-        if pbs[1] then
-
-
-            local betaEffect = c:getBetaEffect();
-            local betaMapped = mapRange(betaEffect, -4, 6600, 0, 100);
-            local clB = betaMapped / 100;
+    for i=1,5 do
+        if pbs[i] then
+            local val = valueList[i];
+            local valMin = minValueList[i];
+            local valMax = maxValueList[i];
+            local mappedVal = mapRange(val, valMin, valMax, 0, 1000);
             local tName = "t" .. tostring(index);
             local pbName = "pb" .. tostring(index);
-            local s = math.floor(betaEffect);
-            --print("changing ", tName, " and ", pbName);
-            tmpUI[tName]:setText(getText("IGUI_PillBeta") .. " (" .. tostring(s) .. "min)");
-            tmpUI[pbName]:setColor(1, 1 - clB, clB, 0);
-            tmpUI[pbName]:setValue(betaMapped);
+            --print("Populating ", i, " at index: ", index, " - val: ", val, " ", valMin, " ", valMax, " ", mappedVal);
+            local m = math.floor(val / 60);
+            if m < 0 then
+                m = 0;
+            end
+            local col = mappedVal / 1000;
+            tmpUI[tName]:setText(stringList[i + 3] .. " (" .. tostring(m) .. " min)");
+            tmpUI[pbName]:setColor(1, 1 - col, col, 0);
+            tmpUI[pbName]:setValue(mappedVal);
             index = index + 1;
+        --else
+            --print("not showing ", i);
         end
-
-        
-        if pbs[2] then
-            local painEffect = c:getPainEffect();
-            local painMapped = mapRange(painEffect, -11, 5400, 0, 100);  
-            local clP = painMapped / 100;
-            local tName = "t" .. tostring(index);
-            local pbName = "pb" .. tostring(index);
-            --print("changing ", tName, " and ", pbName);
-            tmpUI[tName]:setText(getText("IGUI_PillPain"));
-            tmpUI[pbName]:setColor(1, 1 - clP, clP, 0);
-            tmpUI[pbName]:setValue(painMapped);
-            index = index + 1;
-        end
-
-        if pbs[3] then
-            local depressEffect = c:getDepressEffect();
-            local depressMapped = mapRange(depressEffect, 0, 6600, 0, 100);  
-            local clD = depressMapped / 100;
-            local tName = "t" .. tostring(index);
-            local pbName = "pb" .. tostring(index);
-            --print("changing ", tName, " and ", pbName);
-            tmpUI[tName]:setText(getText("IGUI_PillDepr"));
-            tmpUI[pbName]:setColor(1, 1 - clD, clD, 0);
-            tmpUI[pbName]:setValue(depressMapped);
-            index = index + 1;
-        end
-
-        if pbs[4] then
-            local sleepEffect = c:getSleepingTabletEffect();
-            local sleepMapped = mapRange(sleepEffect, -11, 6600, 0, 100);  
-            local clS = sleepMapped / 100;
-            local tName = "t" .. tostring(index);
-            local pbName = "pb" .. tostring(index);
-            --print("changing ", tName, " and ", pbName);
-            tmpUI[tName]:setText(getText("IGUI_PillSleep"));
-            tmpUI[pbName]:setColor(1, 1 - clS, clS, 0);
-            tmpUI[pbName]:setValue(sleepMapped);
-            index = index + 1;
-        end
-
-        if pbs[5] then
-            local antibEffect = c:getReduceInfectionPower();
-            local antibMapped = mapRange(antibEffect, 0, 50, 0, 100);
-            local clA = antibMapped / 100;
-            local tName = "t" .. tostring(index);
-            local pbName = "pb" .. tostring(index);
-            --print("changing ", tName, " and ", pbName);
-            tmpUI[tName]:setText(getText("IGUI_Antibiotics"));
-            tmpUI[pbName]:setColor(1, 1 - clA, clA, 0);
-            tmpUI[pbName]:setValue(antibMapped);
-            index = index + 1;
-        end
-
-
-        --[[
-        local f1= c:getStats():getFatigue();
-        local f2 = c:getBodyDamage():getInfectionGrowthRate();
-        local f3 = c:getBodyDamage():getInfectionLevel();
-        local f4 = c:getBodyDamage():getInfectionMortalityDuration();
-        local f5 = c:getBodyDamage():getInfectionTime();
-        local f6 = c:getReduceInfectionPower();
-        local f7 = c:getBodyDamage():getApparentInfectionLevel();
-        ]]
-
-        --print("Infection Test: ", antibEffect, " -- ", antibMapped, " -- ", clA, " -- ", 1 - clA);
     end
-
-    
-
+    --tmpUI:open();
 end
 
 function getDisplayCount()
@@ -244,7 +174,13 @@ function getDisplayCount()
 end
 
 function getUIIndexfromCount(count)
-    return 6 - count + 1
+    local id = 1
+    if count == 0 then
+        id = 1;
+    else 
+        id = 6 - count + 1;
+    end
+    return id;
 end
 
 function getPillInfoUI()  

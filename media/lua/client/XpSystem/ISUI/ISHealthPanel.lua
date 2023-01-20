@@ -62,6 +62,7 @@ function ISNewHealthPanel:onClick(button)
             return false
         end
        
+        --UI:close();
         updatePillInfoWindow();
         UI:open();
         UI:bringToTop();
