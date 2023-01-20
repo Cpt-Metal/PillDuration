@@ -65,6 +65,7 @@ function ISNewHealthPanel:onClick(button)
         updatePillInfoWindow();
         UI:open();
         UI:bringToTop();
+        
     end
 end
 
@@ -389,7 +390,7 @@ ISHealthPanel.onCheatItem = function(itemType, playerObj)
 end
 
 function ISHealthPanel:update()
-    updatePillInfoWindow();
+    --updatePillInfoWindow();
     ISPanelJoypad.update(self)
     if self.otherPlayer then
         -- ISCollapsableWindow:close() just hides the window
