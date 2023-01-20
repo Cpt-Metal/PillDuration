@@ -1,6 +1,8 @@
 local UI
 require "XpSystem/ISUI/ISHealthPanel"
 
+--local UIList = {ui0, ui1, ui2, ui3, ui4, ui5};
+
 local pbs = {false, false, false, false};
 
 local function onCreateUI()
@@ -43,6 +45,11 @@ local function onCreateUI()
         UI:addProgressBar("sleepPB", 0, 0, 100);
         UI:nextLine();
     end
+
+    UI:addText("t5", getText("IGUI_Antibiotics"), _, "Center");
+    UI:addProgressBar("antibPB", 0, 0, 100);
+    UI:nextLine();
+
     UI:saveLayout();
     UI:close();
 end
@@ -90,6 +97,26 @@ function updatePillInfoWindow()
         UI["sleepPB"]:setColor(1, 1 - clS, clS, 0);    
         UI["sleepPB"]:setValue(sleepMapped);
     end
+
+    local antibEffect = c:getReduceInfectionPower();
+    local antibMapped = mapRange(antibEffect, 0, 50, 0, 100);
+    local clA = antibMapped / 100;
+    UI["antibPB"]:setColor(1, 1 - clA, clA, 0);    
+    UI["antibPB"]:setValue(antibMapped);
+
+
+    --[[
+    local f1= c:getStats():getFatigue();
+    local f2 = c:getBodyDamage():getInfectionGrowthRate();
+    local f3 = c:getBodyDamage():getInfectionLevel();
+    local f4 = c:getBodyDamage():getInfectionMortalityDuration();
+    local f5 = c:getBodyDamage():getInfectionTime();
+    local f6 = c:getReduceInfectionPower();
+    local f7 = c:getBodyDamage():getApparentInfectionLevel();
+    ]]
+
+    print("Infection Test: ", antibEffect, " -- ", antibMapped, " -- ", clA, " -- ", 1 - clA);
+
 end
 
 function getPillInfoUI()

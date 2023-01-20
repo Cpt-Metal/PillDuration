@@ -5,4 +5,5 @@ IGUI_EN = {
  IGUI_PillPain = "Painkillers",
  IGUI_PillDepr = "Anti-Depressants",
  IGUI_PillSleep = "Sleeping Tablets",
+ IGUI_Antibiotics = "Antibiotics",
 }

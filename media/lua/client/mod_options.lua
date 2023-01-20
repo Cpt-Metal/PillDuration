@@ -4,6 +4,7 @@ PillDuration_OPTIONS = {
   showPainkillerValue = true,
   showAntiDepressantsValue = true,
   showSleepingTabletsValue = true,
+  showAntibioticsValue = true,
 }
 
   -- Connecting the options to the menu, so user can change and save them.
