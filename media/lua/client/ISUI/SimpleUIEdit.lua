@@ -1,7 +1,7 @@
 require "ISUI/ISCollapsableWindow"
 require "ISUI/ISSimpleUI"
 
-function ISSimpleUI:open()
+function ISSimpleUI:openAndAdd()
     if not self.isUIVisible then
         self:setVisible(true);
         self:addToUIManager();
@@ -10,7 +10,7 @@ function ISSimpleUI:open()
     end
 end
 
-function ISSimpleUI:close()
+function ISSimpleUI:closeAndRemove()
     if self.isUIVisible then
         self:setVisible(false);
         self:removeFromUIManager();
@@ -19,14 +19,6 @@ function ISSimpleUI:close()
     end
 end
 
-function ISSimpleUI:toggle()
-    if self.isUIVisible then
-        self:setVisible(false);
-        self:removeFromUIManager();
-        self.isUIVisible = false;
-    else
-        self:setVisible(true);
-        self:addToUIManager();
-        self.isUIVisible = true;
-    end
-end
+--function ISSimpleUI:isOpen()
+ --   return self.isUIVisible
+--end

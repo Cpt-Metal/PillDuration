@@ -9,6 +9,9 @@ local playerCharacterObj
 local PAD_BOTTOM = 8
 local FONT_HGT_SMALL = getTextManager():getFontHeight(UIFont.Small)
 
+--local test = 1;
+--local testUI;
+
 -----
 
 ISNewHealthPanel = ISUIElement:derive("ISNewHealthPanel")
@@ -64,7 +67,21 @@ function ISNewHealthPanel:onClick(button)
        
         --UI:close();
         updatePillInfoWindow();
-        UI:open();
+
+        --test = test + 1;
+        --if testUI == nil then
+        --    return
+        --end
+        --testUI = createWindow(test);
+
+        --if testUI:isOpen() then
+         --   testUI:closeAndRemove();
+        --end
+
+
+        --testUI:openAndAdd();
+        --testUI:bringToTop();
+        UI:openAndAdd();
         UI:bringToTop();
         
     end

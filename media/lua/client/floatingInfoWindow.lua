@@ -42,7 +42,7 @@ local function onCreateUI()
     tmpUI:setTitle(getText("IGUI_PillInfoTitle"));
     tmpUI:addText("t1", getText("IGUI_NoneActiveInfo"), _, "Center");
     tmpUI:saveLayout();
-    tmpUI:close();
+    tmpUI:closeAndRemove();
     UIList[1] = tmpUI;
     --print("UI CREATED: ", tostring(tmpUI), " at index ", 1);
 
@@ -50,7 +50,7 @@ local function onCreateUI()
         local tmpUI;
 
         tmpUI = NewUI();
-        tmpUI:setTitle(getText("IGUI_PillInfoTitle") .. tostring(i));
+        tmpUI:setTitle(getText("IGUI_PillInfoTitle"));
 
         for u=i,5 do
             local index = u - i + 1;
@@ -65,7 +65,7 @@ local function onCreateUI()
         end
         tmpUI:setBorderToAllElements(true); 
         tmpUI:saveLayout();
-        tmpUI:close();
+        tmpUI:closeAndRemove();
 
         UIList[i + 1] = tmpUI;
         --print("UI CREATED: ", tostring(tmpUI), " at index ", i + 1);
@@ -82,6 +82,34 @@ local function onCreateUI()
     local a = getUIIndexfromCount(c);
     activeUIid = a;
     UI = UIList[activeUIid];
+end
+
+function createWindow(rowCount)
+    --for i=1,rowCount do
+        local tmpUI;
+
+        tmpUI = NewUI();
+        tmpUI:setTitle(getText("IGUI_PillInfoTitle"));
+
+        for u=1,rowCount do
+            local index = u;
+            local tName = "t" .. tostring(index);
+            local pbName = "pb" .. tostring(index);
+            --print("added ", tName, " and ", pbName);
+            tmpUI:addText(tName, tName, _, "Center");
+            tmpUI:addProgressBar(pbName, 0, 50, 1000);
+            if u ~= rowCount then
+                tmpUI:nextLine(); 
+            end
+        end
+        tmpUI:setBorderToAllElements(true); 
+        tmpUI:saveLayout();
+        --tmpUI:closeAndRemove();
+
+        --UIList[i + 1] = tmpUI;
+        --print("UI CREATED: ", tostring(tmpUI), " at index ", i + 1);
+   -- end
+    return tmpUI
 end
 
 function everyMinute()
@@ -103,9 +131,9 @@ function closeAllButOneUI(id)
     for i=1,6 do
         local ui = UIList[i];
         if i ~= id then
-            ui:close();
+            ui:closeAndRemove();
         else
-            ui:open();
+            ui:openAndAdd();
         end
     end
 end
