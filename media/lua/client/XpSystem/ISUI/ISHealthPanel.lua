@@ -59,14 +59,16 @@ function ISNewHealthPanel:onClick(button)
 
         local doctor = self.otherPlayer or self.character
 
-        local UI = getPillInfoUI();
+        --local UI = getPillInfoUI();
 
-        if not UI then
+        if not getPillInfoUI() then
             return false
         end
+
+        updateAndShow();
        
         --UI:close();
-        updatePillInfoWindow();
+        --updatePillInfoWindow();
 
         --test = test + 1;
         --if testUI == nil then
@@ -81,8 +83,8 @@ function ISNewHealthPanel:onClick(button)
 
         --testUI:openAndAdd();
         --testUI:bringToTop();
-        UI:openAndAdd();
-        UI:bringToTop();
+        --UI:open();
+        --UI:bringToTop();
         
     end
 end
