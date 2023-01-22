@@ -1,4 +1,4 @@
-require "XpSystem/ISUI/ISHealthPanel"
+require "ISUI/ISCollapsableWindow"
 
 local UI
 local pbs = {false, false, false, false, false};
@@ -7,11 +7,24 @@ local stringList = {"", "", "", "", "", "", "", ""};
 local valueList = {0, 0, 0, 0, 0};
 local minValueList = {-4, -14, 0, -11, 0};
 local maxValueList = {6600, 5400, 6600, 6600, 36000};
+local toggleButton = {};
+
+local isVisible = false;
 
 local showBorders = true;
 
 local function onCreateUI()
-    
+
+    -- place toggle button on the main screen
+    toggleButton = ISPanel:new(150, 150, 52, 52);
+    toggleButton.moveWithMouse = true;
+    toggleButton.mybutton = ISButton:new(10, 10, 32, 32, "", toggleButton.mybutton, togglePillWindow);
+    toggleButton.mybutton:setBorderRGBA(0,0,0,0);
+    toggleButton.mybutton:forceImageSize(32,32); 
+    toggleButton.mybutton:setImage(getTexture("media/textures/images/PDIcon32.png")); 
+    toggleButton:addChild(toggleButton.mybutton);
+    toggleButton:addToUIManager();
+
     -- redefine arrays because the values are somehow not loaded
     stringList[1] = getText("IGUI_PillInfoOpen");
     stringList[2] = getText("IGUI_PillInfoTitle");
@@ -42,31 +55,43 @@ local function onCreateUI()
     pbs[4] = PillDuration_OPTIONS.showSleepingTabletsValue;
     pbs[5] = PillDuration_OPTIONS.showAntibioticsValue;
 
-    local c = getDisplayCount();
+    isVisible = false;
+
     if UI then
         UI:closeAndRemove();
+        isVisible = false;
     end
 
+    local c = getDisplayCount();
     createWindow(c);
-
 end
 
 function setShowBorders(val)
     showBorders = val;
     UI:closeAndRemove();
+    isVisible = false;
     local c = getDisplayCount();
     createWindow(c);
     updatePillInfoWindow();
-    UI:openAndAdd();
+end
+
+function togglePillWindow()
+    if isVisible == false then
+        updatePillInfoWindow();
+        UI:open();
+        isVisible = true
+    else
+        UI:close();
+        isVisible = false;
+    end
 end
 
 function createWindow(rowCount)
     UI = NewUI();
-    UI:setTitle(getText("IGUI_PillInfoTitle"));
+    UI:setTitle(stringList[2]);
 
     if rowCount == 0 then
-        UI:setTitle(getText("IGUI_PillInfoTitle"));
-        UI:addText("t1", getText("IGUI_NoneActiveInfo"), _, "Center");
+        UI:addText("t1", stringList[3], _, "Center");
     else
         for i=1,rowCount do
             local tName = "t" .. tostring(i);
@@ -85,6 +110,7 @@ function createWindow(rowCount)
 
     UI:saveLayout();
     UI:close();      
+    isVisible = false;
 end
 
 function everyMinute()
@@ -92,34 +118,32 @@ function everyMinute()
 end
 
 function changePBsValue(index, val)
-    --UI:close();
     UI:closeAndRemove();
+    isVisible = false;
     pbs[index] = val;
     local c = getDisplayCount();
     createWindow(c);
     updatePillInfoWindow();
-    UI:openAndAdd();
 end
 
-function updatePillInfoWindow()
-    local c = getCharacterObj();    
+function updatePillInfoWindow()    
+    local playerObject = getSpecificPlayer(0); 
 
-    if not c then
+    if not playerObject then
         return false
     end  
 
-    --local tmpUI = getPillInfoUI();
     local count = getDisplayCount();
     
     if count == 0 then
         return
     end
 
-    valueList[1] = c:getBetaEffect();
-    valueList[2] = c:getPainEffect();
-    valueList[3] = c:getDepressEffect();
-    valueList[4] = c:getSleepingTabletEffect();
-    valueList[5] = c:getReduceInfectionPower() * 720;
+    valueList[1] = playerObject:getBetaEffect();
+    valueList[2] = playerObject:getPainEffect();
+    valueList[3] = playerObject:getDepressEffect();
+    valueList[4] = playerObject:getSleepingTabletEffect();
+    valueList[5] = playerObject:getReduceInfectionPower() * 720;
 
     local index = 1;
 
@@ -147,6 +171,7 @@ end
 function updateAndShow()
     updatePillInfoWindow();
     UI:open();
+    isVisible = true;
 end
 
 function getDisplayCount()
@@ -162,6 +187,8 @@ end
 function getPillInfoUI()  
     return UI
 end
+
+pillToggleButton = ISCollapsableWindow:derive("pillToggleButton");
 
 Events.OnCreateUI.Add(onCreateUI)
 Events.EveryOneMinute.Add(everyMinute)
