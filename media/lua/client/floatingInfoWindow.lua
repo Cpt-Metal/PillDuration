@@ -1,13 +1,19 @@
-require "ISUI/ISCollapsableWindow"
+require "ISUI/ISCollapsableWindow";
+json = require "libs/myjson";
+local config = require "config";
 
 local UI
 local pbs = {false, false, false, false, false};
 
 local stringList = {"", "", "", "", "", "", "", ""};
 local valueList = {0, 0, 0, 0, 0};
-local minValueList = {-4, -14, 0, -11, 0};
+local minValueList = {0, 0, 0, 0, 0};
 local maxValueList = {6600, 5400, 6600, 6600, 36000};
 local toggleButton = {};
+-- default positions are overriden with loaded values
+local savedPositions = {96, 78, 500, 600};
+local uiX = 96;
+local uiY = 78;
 
 local isVisible = false;
 
@@ -15,10 +21,14 @@ local showBorders = true;
 
 local function onCreateUI()
 
+    loadPositionSettings();
+    uiX = savedPositions[3];
+    uiY = savedPositions[4];
+
     -- place toggle button on the main screen
-    toggleButton = ISPanel:new(150, 150, 52, 52);
+    toggleButton = ISPanel:new(savedPositions[1], savedPositions[2], 50, 50);
     toggleButton.moveWithMouse = true;
-    toggleButton.mybutton = ISButton:new(10, 10, 32, 32, "", toggleButton.mybutton, togglePillWindow);
+    toggleButton.mybutton = ISButton:new(9, 9, 32, 32, "", toggleButton.mybutton, togglePillWindow);
     toggleButton.mybutton:setBorderRGBA(0,0,0,0);
     toggleButton.mybutton:forceImageSize(32,32); 
     toggleButton.mybutton:setImage(getTexture("media/textures/images/PDIcon32.png")); 
@@ -56,9 +66,9 @@ local function onCreateUI()
     pbs[5] = PillDuration_OPTIONS.showAntibioticsValue;
 
     isVisible = false;
-
+    
     if UI then
-        UI:closeAndRemove();
+        UI:close();
         isVisible = false;
     end
 
@@ -103,12 +113,11 @@ function createWindow(rowCount)
             end
         end
     end
-
     if showBorders then
         UI:setBorderToAllElements(true); 
     end
-
     UI:saveLayout();
+    UI:setPositionPixel(uiX, uiY);
     UI:close();      
     isVisible = false;
 end
@@ -150,21 +159,119 @@ function updatePillInfoWindow()
     for i=1,5 do
         if pbs[i] then
             local val = valueList[i];
+			if val < 0 then
+				val = 0;
+			end
             local valMin = minValueList[i];
             local valMax = maxValueList[i];
             local mappedVal = mapRange(val, valMin, valMax, 0, 1000);
             local tName = "t" .. tostring(index);
             local pbName = "pb" .. tostring(index);
             local m = math.floor(val / 60);
-            if m < 0 then
-                m = 0;
-            end
             local col = mappedVal / 1000;
             UI[tName]:setText(stringList[i + 3] .. " (" .. tostring(m) .. " min)");
             UI[pbName]:setColor(1, 1 - col, col, 0);
             UI[pbName]:setValue(mappedVal);
             index = index + 1;
         end
+    end
+    uiX = UI:getPositionX();
+    uiY = UI:getPositionY();
+
+end
+
+function savePositionSettings()
+    -- Check if the game window instance is created, if not it means that 
+    -- save was not triggered from the loaded game (new game route).
+    -- get file
+    print("PillDuation:  Writing button location parameters to file");
+    local writer = getFileWriter("pillduration.ini", true, false)
+
+    -- write button and window locations parameters
+    local savedParameters = {};
+    savedParameters["PillDurationButton"] = {
+        x = toggleButton.x,
+        y = toggleButton.y
+    };
+    savedParameters["PillDurationWindow"] = {
+        x = uiX,
+        y = uiY,
+    };
+
+    writer:write(json.stringify(savedParameters));
+    writer:close();
+end
+
+function loadPositionSettings()
+    print("PillDuation: try to read .ini file");
+    local reader = getFileReader("pillduration.ini", false);
+    local parameters = {};
+
+    local loadDefaults = false;
+
+    -- file found parse the json
+    if reader then
+        local line = reader:readLine();
+        reader:close();
+
+        -- we need a protection against empty file or other malformed files
+        if not line or line == nil or line == "" then
+
+            -- load default values from string 
+            print("PillDuation: No .ini file found or no content");
+
+            loadDefaults = true
+        else
+            parameters = json.parse(line);
+            -- parsed OK but key doesnt exists
+            if not parameters["PillDurationButton"] or not parameters["PillDurationWindow"] then
+                loadDefaults = true;
+                -- both keys exists but any member is missing
+            elseif not (parameters["PillDurationButton"].x and parameters["PillDurationButton"].y and parameters["PillDurationWindow"].x and
+                parameters["PillDurationWindow"].y) then
+                loadDefaults = true;
+            end
+        end
+    else
+        -- no file found, load default parameters
+        loadDefaults = true;
+        print("PillDuation: No parameters file found");
+    end
+
+    if loadDefaults == true then
+        print("PillDuation: Loading default parameters");
+        savedPositions[1] = 96;
+        savedPositions[2] = 78;
+        savedPositions[3] = 600;
+        savedPositions[4] = 500;
+    else 
+        savedPositions[1] = parameters["PillDurationButton"].x;
+        savedPositions[2] = parameters["PillDurationButton"].y;
+        savedPositions[3] = parameters["PillDurationWindow"].x;
+        savedPositions[4] = parameters["PillDurationWindow"].y;
+
+        -- check if values are within screenspace
+        local xres = getCore():getScreenWidth()
+        local yres = getCore():getScreenHeight()
+
+        -- override if invalid
+        if savedPositions[1] < 0 or savedPositions[1] > xres then
+            savedPositions[1] = 96;
+        end;
+
+        if savedPositions[2] < 0 or savedPositions[2] > yres then
+            savedPositions[2] = 78;
+        end;
+
+        if savedPositions[3] < 0 or savedPositions[3] > xres then
+            savedPositions[3] = 600;
+        end;
+
+        if savedPositions[4] < 0 or savedPositions[4] > yres then
+            savedPositions[4] = 500;
+        end;
+
+        print("PillDuation: Successfully loaded stored parameters");
     end
 end
 
@@ -191,4 +298,5 @@ end
 pillToggleButton = ISCollapsableWindow:derive("pillToggleButton");
 
 Events.OnCreateUI.Add(onCreateUI)
+Events.OnSave.Add(savePositionSettings);
 Events.EveryOneMinute.Add(everyMinute)

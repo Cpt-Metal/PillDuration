@@ -16,3 +16,11 @@ function ISSimpleUI:closeAndRemove()
         self.isUIVisible = false;
     end
 end
+
+function ISSimpleUI:getPositionX()
+    return self.x;
+end
+
+function ISSimpleUI:getPositionY()
+    return self.y;
+end
